@@ -1,60 +1,67 @@
 package com.example.aplikasisederhana
 
-import android.content.Intent
 import android.os.Bundle
-import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.cardview.widget.CardView
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.fragment.app.Fragment
+import com.example.aplikasisederhana.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var tvWelcome: TextView
-    private lateinit var tvUsername: TextView
+    private lateinit var binding: ActivityMainBinding
+
+    // Simpan username dari LoginActivity untuk diteruskan ke fragment
+    private var username: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Inisialisasi komponen TextView untuk menampilkan usernama
-        tvWelcome = findViewById(R.id.tvWelcome)
-        tvUsername = findViewById(R.id.tvUsernameDisplay)
+        // Ambil username yang dikirim dari LoginActivity
+        username = intent.getStringExtra("username") ?: "-"
 
-        // Inisialisasi komponen TextView untuk menampilkan usernama
-        // Mengambil data username yang dikirim dari LoginActivity melalui Intent
-        // Pastikan key "username" sama dengan yang digunakan di putExtra pada LoginActivity
-        val username = intent.getStringExtra("username")
-
-        // Menampilkan data ke TextView
-        // Menggunakan nilai default "-" jika data username kosong atau null
-        tvUsername.text = "${username ?: "-"}"
-
-        // 3. Navigasi Intent Eksplisit ke Daftar Service
-        val cardService = findViewById<CardView>(R.id.cardServiceMenu)
-        cardService.setOnClickListener {
-            val intent = Intent(this, ServiceListActivity::class.java)
-            startActivity(intent)
+        // Tampilkan HomeFragment pertama kali
+        if (savedInstanceState == null) {
+            val homeFragment = HomeFragment()
+            val args = Bundle()
+            args.putString("username", username)
+            homeFragment.arguments = args
+            replaceFragment(homeFragment)
+            binding.bottomNavigation.selectedItemId = R.id.nav_home
         }
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-        bottomNav.selectedItemId = R.id.nav_home
 
-        bottomNav.setOnItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_home -> true // Sudah di halaman utama
+        // Listener bottom navigation
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    val homeFragment = HomeFragment()
+                    val args = Bundle()
+                    args.putString("username", username)
+                    homeFragment.arguments = args
+                    replaceFragment(homeFragment)
+                    true
+                }
                 R.id.nav_service -> {
-                    // Intent Eksplisit ke daftar data [2, 3]
-                    startActivity(Intent(this, ServiceListActivity::class.java))
+                    replaceFragment(ListFragment())
                     true
                 }
                 R.id.nav_profile -> {
-                    Toast.makeText(this, "Fitur Profil segera hadir", Toast.LENGTH_SHORT).show()
+                    val profilFragment = ProfilFragment()
+                    val args = Bundle()
+                    args.putString("username", username)
+                    profilFragment.arguments = args
+                    replaceFragment(profilFragment)
                     true
                 }
                 else -> false
             }
         }
+    }
+
+    private fun replaceFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 }
